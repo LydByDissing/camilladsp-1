@@ -32,6 +32,8 @@ pub mod fftconv;
 pub mod lookahead_limiter;
 /// Loudness compensation filter.
 pub mod loudness;
+/// Virtual bass (missing fundamental) filter.
+pub mod virtual_bass;
 
 use crate::config;
 use crate::config::{BinarySampleFormat, Issues, issue_path};
@@ -236,6 +238,9 @@ pub fn validate_filter(
         config::Filter::Clipper { parameters, .. } => clipper::validate_config(parameters),
         config::Filter::LookaheadLimiter { parameters, .. } => {
             lookahead_limiter::validate_config(parameters, fs)
+        }
+        config::Filter::VirtualBass { parameters, .. } => {
+            virtual_bass::validate_config(fs, parameters)
         }
     };
     let mut issues = Issues::new();

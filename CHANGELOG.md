@@ -11,6 +11,7 @@ New features:
 - JSON Schema of the websocket messages, for validating clients.
 - RF64 support for reading and writing wav files larger than 4 GB.
 - Adjustable corner frequencies and Q for the `Loudness` shelves.
+- Add `VirtualBass` filter, for deep bass on small speakers.
 - ASIO: capture and playback can use two different devices.
 - PipeWire: `loopback` option for capturing from the output of a sink.
 - PipeWire: request the config sample rate as the graph rate, for multi-rate DACs.

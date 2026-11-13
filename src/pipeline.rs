@@ -117,6 +117,9 @@ impl FilterGroup {
                         waveform_length,
                     ))
                 }
+                config::Filter::VirtualBass { parameters, .. } => Box::new(
+                    filters::virtual_bass::VirtualBass::from_config(name, parameters, sample_freq),
+                ),
             };
             filters.push(filter);
         }

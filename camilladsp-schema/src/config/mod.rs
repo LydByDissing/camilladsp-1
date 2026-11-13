@@ -1019,6 +1019,11 @@ pub enum Filter {
         description: Option<String>,
         parameters: LookaheadLimiterParameters,
     },
+    VirtualBass {
+        #[serde(default)]
+        description: Option<String>,
+        parameters: VirtualBassParameters,
+    },
 }
 
 /// Source of convolution coefficients for the FFT convolution filter.
@@ -1795,6 +1800,81 @@ impl LookaheadLimiterParameters {
 
     pub fn release_unit(&self) -> TimeUnit {
         self.release_unit
+    }
+}
+
+/// Parameters for the virtual bass (missing fundamental) filter.
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+#[serde(deny_unknown_fields)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+pub struct VirtualBassParameters {
+    #[serde(default)]
+    pub low_freq: Option<FiniteF64>,
+    #[serde(default)]
+    pub high_freq: Option<FiniteF64>,
+    #[serde(default)]
+    pub harmonics_freq: Option<FiniteF64>,
+    #[serde(default)]
+    pub harmonic2: Option<FiniteF64>,
+    #[serde(default)]
+    pub harmonic3: Option<FiniteF64>,
+    #[serde(default)]
+    pub harmonic4: Option<FiniteF64>,
+    #[serde(default)]
+    pub gain: Option<FiniteF64>,
+    #[serde(default)]
+    pub attack: Option<FiniteF64>,
+    #[serde(default)]
+    pub attack_unit: Option<TimeUnit>,
+    #[serde(default)]
+    pub release: Option<FiniteF64>,
+    #[serde(default)]
+    pub release_unit: Option<TimeUnit>,
+}
+
+impl VirtualBassParameters {
+    pub fn low_freq(&self) -> f64 {
+        self.low_freq.map_or(35.0, FiniteF64::get)
+    }
+
+    pub fn high_freq(&self) -> f64 {
+        self.high_freq.map_or(90.0, FiniteF64::get)
+    }
+
+    pub fn harmonics_freq(&self) -> f64 {
+        self.harmonics_freq.map_or(300.0, FiniteF64::get)
+    }
+
+    pub fn harmonic2(&self) -> f64 {
+        self.harmonic2.map_or(1.0, FiniteF64::get)
+    }
+
+    pub fn harmonic3(&self) -> f64 {
+        self.harmonic3.map_or(0.5, FiniteF64::get)
+    }
+
+    pub fn harmonic4(&self) -> f64 {
+        self.harmonic4.map_or(0.25, FiniteF64::get)
+    }
+
+    pub fn gain(&self) -> f64 {
+        self.gain.map_or(0.0, FiniteF64::get)
+    }
+
+    pub fn attack(&self) -> f64 {
+        self.attack.map_or(2.0, FiniteF64::get)
+    }
+
+    pub fn attack_unit(&self) -> TimeUnit {
+        self.attack_unit.unwrap_or(TimeUnit::Milliseconds)
+    }
+
+    pub fn release(&self) -> f64 {
+        self.release.map_or(200.0, FiniteF64::get)
+    }
+
+    pub fn release_unit(&self) -> TimeUnit {
+        self.release_unit.unwrap_or(TimeUnit::Milliseconds)
     }
 }
 

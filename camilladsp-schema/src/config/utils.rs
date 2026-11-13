@@ -658,6 +658,9 @@ fn filter_parameters_changed(new: &Filter, current: &Filter) -> Option<bool> {
             Filter::LookaheadLimiter { parameters: a, .. },
             Filter::LookaheadLimiter { parameters: b, .. },
         ) => Some(a != b),
+        (Filter::VirtualBass { parameters: a, .. }, Filter::VirtualBass { parameters: b, .. }) => {
+            Some(a != b)
+        }
         _ => None,
     }
 }

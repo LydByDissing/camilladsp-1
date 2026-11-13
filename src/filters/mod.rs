@@ -32,6 +32,8 @@ pub mod fftconv;
 pub mod lookahead_limiter;
 /// Loudness compensation filter.
 pub mod loudness;
+/// Virtual bass (missing fundamental) filter.
+pub mod virtual_bass;
 
 use crate::config;
 
