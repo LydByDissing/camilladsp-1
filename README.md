@@ -129,6 +129,7 @@ and the Mozilla Public License Version 2.0:
    - **[IIR](#iir)**
    - **[Dither](#dither)**
    - **[Limiter](#limiter)**
+   - **[Virtual bass](#virtual-bass)**
    - **[Difference equation](#difference-equation)**
 - **[Processors](#processors)**
    - **[Compressor](#compressor)**
@@ -2376,6 +2377,49 @@ Example:
 Parameters:
   * `soft_clip`: enable soft clipping. Set to `false` to use hard clipping. Optional, defaults to `false`.
   * `clip_limit`: the level in dB to clip at.
+
+### Virtual bass
+The "VirtualBass" filter makes deep bass audible on speakers that cannot play it,
+by adding harmonics of the bass.
+The ear hears the missing fundamental from its harmonics.
+
+The bass between `low_freq` and `high_freq` is divided by its own envelope and turned into
+2nd, 3rd and 4th harmonics by Chebyshev polynomials. Multiplying by the envelope again makes the
+harmonics follow the level of the bass, so they sound the same at any level.
+The harmonics are band-passed between `high_freq` and `harmonics_freq` and added to the signal.
+The signal itself passes unchanged, so a highpass filter is needed to remove the bass
+that the speaker cannot play.
+
+Example:
+```
+  example_virtual_bass:
+    type: VirtualBass
+    parameters:
+      low_freq: 35.0 (*)
+      high_freq: 90.0 (*)
+      harmonics_freq: 300.0 (*)
+      harmonic2: 1.0 (*)
+      harmonic3: 0.5 (*)
+      harmonic4: 0.25 (*)
+      gain: 0.0 (*)
+      attack: 2.0 (*)
+      release: 200.0 (*)
+```
+
+Parameters:
+  * `low_freq`: lowest frequency of the bass that harmonics are made from, in Hz. A second order
+    highpass. Optional, defaults to 35 Hz.
+  * `high_freq`: highest frequency of the bass that harmonics are made from, and lowest frequency
+    of the harmonics, in Hz. Fourth order lowpass and highpass. Optional, defaults to 90 Hz.
+  * `harmonics_freq`: highest frequency of the harmonics, in Hz. A second order lowpass.
+    Must be below half the samplerate. Optional, defaults to 300 Hz.
+  * `harmonic2`, `harmonic3`, `harmonic4`: the level of each harmonic relative to the bass,
+    0 to 10. Optional, default to 1.0, 0.5 and 0.25.
+  * `gain`: the level of the harmonics in dB, at most 20. Optional, defaults to 0 dB.
+  * `attack`: attack time of the envelope in milliseconds. Must be greater than or equal to 0.
+    Optional, defaults to 2 ms.
+  * `release`: release time of the envelope in milliseconds. Must be greater than 0.
+    Optional, defaults to 200 ms.
 
 ### Difference equation
 The "DiffEq" filter implements a generic difference equation filter with transfer function:

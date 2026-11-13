@@ -1010,6 +1010,11 @@ pub enum Filter {
         description: Option<String>,
         parameters: LimiterParameters,
     },
+    VirtualBass {
+        #[serde(default)]
+        description: Option<String>,
+        parameters: VirtualBassParameters,
+    },
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
@@ -1588,6 +1593,69 @@ impl RACEParameters {
 
     pub fn delay_unit(&self) -> TimeUnit {
         self.delay_unit.unwrap_or(TimeUnit::Milliseconds)
+    }
+}
+
+/// Parameters for the virtual bass (missing fundamental) filter.
+/// Attack and release are in milliseconds.
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+#[serde(deny_unknown_fields)]
+pub struct VirtualBassParameters {
+    #[serde(default)]
+    pub low_freq: Option<PrcFmt>,
+    #[serde(default)]
+    pub high_freq: Option<PrcFmt>,
+    #[serde(default)]
+    pub harmonics_freq: Option<PrcFmt>,
+    #[serde(default)]
+    pub harmonic2: Option<PrcFmt>,
+    #[serde(default)]
+    pub harmonic3: Option<PrcFmt>,
+    #[serde(default)]
+    pub harmonic4: Option<PrcFmt>,
+    #[serde(default)]
+    pub gain: Option<PrcFmt>,
+    #[serde(default)]
+    pub attack: Option<PrcFmt>,
+    #[serde(default)]
+    pub release: Option<PrcFmt>,
+}
+
+impl VirtualBassParameters {
+    pub fn low_freq(&self) -> PrcFmt {
+        self.low_freq.unwrap_or(35.0)
+    }
+
+    pub fn high_freq(&self) -> PrcFmt {
+        self.high_freq.unwrap_or(90.0)
+    }
+
+    pub fn harmonics_freq(&self) -> PrcFmt {
+        self.harmonics_freq.unwrap_or(300.0)
+    }
+
+    pub fn harmonic2(&self) -> PrcFmt {
+        self.harmonic2.unwrap_or(1.0)
+    }
+
+    pub fn harmonic3(&self) -> PrcFmt {
+        self.harmonic3.unwrap_or(0.5)
+    }
+
+    pub fn harmonic4(&self) -> PrcFmt {
+        self.harmonic4.unwrap_or(0.25)
+    }
+
+    pub fn gain(&self) -> PrcFmt {
+        self.gain.unwrap_or(0.0)
+    }
+
+    pub fn attack(&self) -> PrcFmt {
+        self.attack.unwrap_or(2.0)
+    }
+
+    pub fn release(&self) -> PrcFmt {
+        self.release.unwrap_or(200.0)
     }
 }
 

@@ -1,3 +1,7 @@
+# Unreleased
+New features:
+- Add `VirtualBass` filter, for deep bass on small speakers.
+
 # 4.1.3
 Bugfixes:
 - Increased capture ringbuffer sizes in CoreAudio, WASAPI, ASIO, and threaded ALSA

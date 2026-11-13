@@ -96,6 +96,9 @@ impl FilterGroup {
                 config::Filter::Limiter { parameters, .. } => {
                     Box::new(filters::limiter::Limiter::from_config(name, parameters))
                 }
+                config::Filter::VirtualBass { parameters, .. } => Box::new(
+                    filters::virtual_bass::VirtualBass::from_config(name, parameters, sample_freq),
+                ),
             };
             filters.push(filter);
         }
