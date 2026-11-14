@@ -29,6 +29,10 @@ pub use camilladsp_schema::filters::virtual_bass::validate_config;
 /// The Q values of a fourth order Butterworth filter.
 const BUTTERWORTH4_Q: [f64; 2] = [0.541_196_100_146_197, 1.306_562_964_876_376_6];
 
+/// An envelope below this is flushed: it could otherwise decay into subnormal
+/// numbers, which some CPUs handle very slowly.
+const SMALL_ENVELOPE: CamillaFloat = 1.0e-20;
+
 /// Adds harmonics of the deep bass, for speakers that cannot play the bass
 /// itself. The ear hears the missing fundamental from its harmonics.
 ///
@@ -132,7 +136,7 @@ impl VirtualBass {
             self.release
         };
         self.envelope = level + coeff * (self.envelope - level);
-        if self.envelope <= 0.0 {
+        if self.envelope < SMALL_ENVELOPE {
             return 0.0;
         }
         // With a non-zero attack the envelope can trail the peaks.
@@ -170,7 +174,7 @@ impl Filter for VirtualBass {
         {
             stage.flush_subnormals();
         }
-        if self.envelope.is_subnormal() {
+        if self.envelope < SMALL_ENVELOPE {
             self.envelope = 0.0;
         }
     }
@@ -330,6 +334,8 @@ mod tests {
             silence.fill(0.0);
             filter.process_waveform(&mut silence);
             assert!(silence.iter().all(|v| v.is_finite()));
+            // The envelope doesn't linger on its way to the subnormal range.
+            assert!(filter.envelope == 0.0 || filter.envelope >= 1.0e-20);
         }
         assert!(silence.iter().all(|v| v.abs() < 1.0e-12));
         // Nothing subnormal is carried into the next chunk.
