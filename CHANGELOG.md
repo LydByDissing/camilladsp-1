@@ -30,6 +30,7 @@ Changes:
 - Overruns and underruns are logged the same way in every backend, with one warning per event.
 
 Bugfixes:
+- Flush small biquad states before they decay into subnormal numbers, which are slow on some CPUs.
 - Prevent high RACE CPU use when its output decays to silence.
 - Reserve enough channel slots when growing recycled audio buffers, broken since 4.0.
 - Changing biquad parameters on the fly no longer produces a loud transient.

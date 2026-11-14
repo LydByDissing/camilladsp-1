@@ -199,14 +199,15 @@ impl Biquad {
         out
     }
 
-    /// Flush stored subnormal numbers to zero.
+    /// Flush stored numbers so small that they could decay into subnormals
+    /// during the next chunk. Some CPUs, like the ARM1176 in the Raspberry Pi
+    /// Zero, are very slow with subnormal numbers.
     pub(crate) fn flush_subnormals(&mut self) {
-        if self.s1.is_subnormal() {
-            trace!("Biquad filter '{}', flushing subnormal s1", self.name);
+        const SMALL: CamillaFloat = 1.0e-20;
+        if self.s1.abs() < SMALL {
             self.s1 = 0.0;
         }
-        if self.s2.is_subnormal() {
-            trace!("Biquad filter '{}', flushing subnormal s2", self.name);
+        if self.s2.abs() < SMALL {
             self.s2 = 0.0;
         }
     }
@@ -770,6 +771,28 @@ mod tests {
         let gain = 20.0 * magn.log10();
         let phase = 180.0 / pi * ang;
         (gain, phase)
+    }
+
+    #[test]
+    fn decay_never_reaches_subnormals() {
+        // A low highpass decays slowly, a whole chunk at a time, after the
+        // signal stops.
+        let conf = BiquadParameters::Highpass {
+            freq: finite!(40.0),
+            q: finite!(std::f64::consts::FRAC_1_SQRT_2),
+        };
+        let coeffs = BiquadCoefficients::from_config(48000, conf);
+        let mut filter = Biquad::new("test", 48000, coeffs);
+        let mut wave: Vec<CamillaFloat> = (0..1024)
+            .map(|n| (n as CamillaFloat * 0.01).sin())
+            .collect();
+        filter.process_waveform(&mut wave);
+        for _ in 0..2000 {
+            let mut silence = vec![0.0; 1024];
+            filter.process_waveform(&mut silence);
+            assert!(silence.iter().all(|v| !v.is_subnormal()));
+        }
+        assert_eq!((filter.s1, filter.s2), (0.0, 0.0));
     }
 
     #[test]
