@@ -22,6 +22,10 @@ use crate::utils::decibels::db_to_linear;
 use crate::PrcFmt;
 use crate::Res;
 
+/// States and envelopes below this are flushed: they could otherwise decay
+/// into subnormal numbers, which some CPUs handle very slowly.
+const SMALL: PrcFmt = 1.0e-20;
+
 /// The Q values of a fourth order Butterworth filter.
 const BUTTERWORTH4_Q: [PrcFmt; 2] = [0.541_196_100_146_197, 1.306_562_964_876_376_6];
 /// Largest weight of a harmonic, relative to the bass it is made from.
@@ -121,7 +125,7 @@ impl VirtualBass {
             self.release
         };
         self.envelope = level + coeff * (self.envelope - level);
-        if self.envelope <= 0.0 {
+        if self.envelope < SMALL {
             return 0.0;
         }
         // With a non-zero attack the envelope can trail the peaks.
@@ -134,21 +138,22 @@ impl VirtualBass {
             * (self.weights[0] * second + self.weights[1] * third + self.weights[2] * fourth)
     }
 
-    /// Flush stored subnormal numbers to zero.
+    /// Flush stored numbers so small that they could decay into subnormals
+    /// during the next chunk.
     fn flush_subnormals(&mut self) {
         for stage in self
             .bass_band
             .iter_mut()
             .chain(self.harmonics_band.iter_mut())
         {
-            if stage.s1.is_subnormal() {
+            if stage.s1.abs() < SMALL {
                 stage.s1 = 0.0;
             }
-            if stage.s2.is_subnormal() {
+            if stage.s2.abs() < SMALL {
                 stage.s2 = 0.0;
             }
         }
-        if self.envelope.is_subnormal() {
+        if self.envelope < SMALL {
             self.envelope = 0.0;
         }
     }
@@ -365,10 +370,17 @@ mod tests {
         assert!(quiet.iter().all(|v| v.is_finite()));
         // Long enough for the envelope and the filter states to die out.
         let mut silence = vec![0.0; 1024];
+        // No state lingers on its way to the subnormal range between chunks:
+        // it is either cleared or still clearly above it.
+        let cleared_or_large = |v: PrcFmt| v == 0.0 || v.abs() >= 1.0e-20;
         for _ in 0..1000 {
             silence.fill(0.0);
             filter.process_waveform(&mut silence).unwrap();
             assert!(silence.iter().all(|v| v.is_finite()));
+            assert!(cleared_or_large(filter.envelope));
+            for stage in filter.bass_band.iter().chain(filter.harmonics_band.iter()) {
+                assert!(cleared_or_large(stage.s1) && cleared_or_large(stage.s2));
+            }
         }
         assert!(silence.iter().all(|v| v.abs() < 1.0e-12));
         // Nothing subnormal is carried into the next chunk.
